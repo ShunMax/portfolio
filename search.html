@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>検索結果</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = { darkMode: "class", theme: { extend: { colors: { primary: "#137fec", "background-light": "#f6f7f8", "background-dark": "#101922" }, fontFamily: { display: ["Inter"] }, borderRadius: { full: "9999px" } } } };
+    </script>
+    <script>
+      try{document.documentElement.classList.toggle('dark', (localStorage.theme ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'))==='dark');}catch(e){}
+    </script>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+    <header class="sticky top-0 z-40 bg-white/90 dark:bg-neutral-900/90 backdrop-blur border-b border-black/5 dark:border-white/5">
+      <div class="max-w-6xl mx-auto px-4 md:px-6">
+        <div class="h-16 flex items-center justify-between gap-4">
+          <a href="index.html" class="flex items-center gap-2 group">
+            <img src="images/images.logo.png" onerror="this.src='images/avatar.svg'" alt="Shun's AI Lab" class="h-8 md:h-9 w-auto object-contain">
+            <span class="font-semibold tracking-tight group-hover:opacity-90">シュンのAI実験室</span>
+          </a>
+          <form id="search-form" class="flex-1 max-w-3xl ml-4 mr-4 hidden md:flex items-center gap-3" role="search" aria-label="サイト内検索">
+            <div class="flex-1 relative">
+              <input id="search-input" type="search" placeholder="キーワードを入力" class="w-full h-11 rounded-xl pl-4 pr-28 bg-white/95 dark:bg-black/20 border border-black/10 dark:border-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" />
+              <ul id="suggestions" class="hidden absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-xl shadow overflow-hidden max-h-64 overflow-y-auto"></ul>
+              <div class="absolute right-2 top-1/2 -translate-y-1/2 flex gap-2">
+                <button id="btn-search-all" type="submit" class="px-4 h-9 rounded-xl text-white hover:opacity-90" style="background-color:#013d9b">探す</button>
+              </div>
+            </div>
+          </form>
+          <a href="index.html" class="md:hidden size-9 grid place-items-center rounded-xl border border-black/10 dark:border-white/10" aria-label="Back">←</a>
+        </div>
+      </div>
+      <!-- mobile search under header -->
+      <div class="md:hidden border-t border-black/5 dark:border-white/5">
+        <div class="max-w-6xl mx-auto px-4 py-3">
+          <form id="search-form-m" class="flex items-center gap-3" role="search">
+            <div class="flex-1 relative">
+              <input id="search-input-m" type="search" placeholder="キーワードを入力" class="w-full h-11 rounded-xl pl-4 pr-24 bg-white/95 dark:bg-black/20 border border-black/10 dark:border-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary" />
+              <ul id="suggestions-m" class="hidden absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-xl shadow overflow-hidden max-h-64 overflow-y-auto"></ul>
+              <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 h-9 rounded-xl text-white" style="background-color:#013d9b">探す</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 md:px-6 pb-20">
+      <section class="pt-8">
+        <h1 id="result-title" class="text-2xl md:text-3xl font-extrabold tracking-tight mb-6">検索結果</h1>
+
+        <div class="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div class="flex items-center gap-2">
+            <button data-cat="all" class="chip chip-active" type="button">すべて</button>
+            <button data-cat="app" class="chip" type="button">アプリ</button>
+            <button data-cat="web" class="chip" type="button">ウェブサイト</button>
+          </div>
+          <div class="flex items-center gap-2 text-sm">
+            <label for="sort" class="text-gray-600 dark:text-gray-400">並び替え:</label>
+            <select id="sort" class="h-9 rounded-xl border border-black/10 dark:border-white/10 bg-white/90 dark:bg-black/20 px-3">
+              <option value="relevance">関連度</option>
+              <option value="newest">新着順(仮)</option>
+              <option value="popular">人気順(仮)</option>
+              <option value="az">タイトル A→Z</option>
+              <option value="za">タイトル Z→A</option>
+            </select>
+            <div class="text-gray-600 dark:text-gray-400 ml-2"><span id="count">0</span> 件ヒット</div>
+          </div>
+        </div>
+
+        <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+      </section>
+    </main>
+
+    <template id="card-template">
+      <article class="bg-white dark:bg-black/20 border border-black/5 dark:border-white/10 shadow-sm rounded-2xl overflow-hidden flex flex-col">
+        <img class="h-40 w-full object-cover" alt="" loading="lazy" decoding="async" />
+        <div class="p-4 flex flex-col gap-3">
+          <h3 class="font-semibold text-base"></h3>
+          <div class="flex flex-col gap-2">
+            <a role="button" target="_blank" rel="noopener noreferrer" class="btn-view inline-flex items-center justify-center text-white hover:brightness-110 active:brightness-95 rounded-xl px-4 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background-light dark:focus-visible:ring-offset-background-dark" style="background-color:#013d9b">View</a>
+            <a role="button" target="_blank" rel="noopener noreferrer" class="btn-learn inline-flex items-center justify-center bg-white dark:bg-transparent rounded-xl px-4 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background-light dark:focus-visible:ring-offset-background-dark" style="color:#013d9b;border:1px solid #013d9b">コードを学ぶ</a>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script>
+      const GITHUB_URL = 'https://github.com/';
+      function getQuery(){
+        const p = new URLSearchParams(location.search);
+        return (p.get('q')||'').trim();
+      }
+      function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+      function highlight(title, q){ if(!q) return escapeHtml(title); const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')})`,'ig'); return escapeHtml(title).replace(re,'<mark class="px-1 rounded bg-yellow-200 text-black">$1</mark>'); }
+      function makeCard({ title, thumb, demo }, viewLabel, q) {
+        const node = document.getElementById('card-template').content.firstElementChild.cloneNode(true);
+        node.querySelector('img').src = thumb;
+        node.querySelector('img').alt = title + ' thumbnail';
+        node.querySelector('h3').innerHTML = highlight(title, q);
+        node.querySelector('.btn-view').href = demo;
+        node.querySelector('.btn-view').textContent = viewLabel;
+        node.querySelector('.btn-learn').href = GITHUB_URL;
+        return node;
+      }
+      function filterItems({apps, webs}, q, cat){
+        const withMeta = [
+          ...(apps||[]).filter(p=>p.published===true).map((p,i)=>({...p, _type:'app', _idx:i})),
+          ...(webs||[]).filter(p=>p.published===true).map((p,i)=>({...p, _type:'web', _idx:i}))
+        ];
+        let items = withMeta;
+        if(cat && cat!=='all') items = items.filter(it=>it._type===cat);
+        if(!q) return items;
+        const lc = q.toLowerCase();
+        const match = (item)=> item.title.toLowerCase().includes(lc);
+        return items.filter(match);
+      }
+      function sortItems(items, mode){
+        const copy = [...items];
+        switch(mode){
+          case 'newest':
+            return copy.sort((a,b)=> b._idx - a._idx);
+          case 'popular':
+            return copy.sort((a,b)=> (b.title.length%10) - (a.title.length%10));
+          case 'az':
+            return copy.sort((a,b)=> a.title.localeCompare(b.title));
+          case 'za':
+            return copy.sort((a,b)=> b.title.localeCompare(a.title));
+          default:
+            return copy;
+        }
+      }
+      function render(items, q){
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        const viewLabel = '体験する';
+        items.forEach(p=> grid.appendChild(makeCard(p, viewLabel, q)));
+        document.getElementById('count').textContent = items.length;
+      }
+      function setTitle(q){
+        const t = q? `"${q}" の検索結果` : 'すべてのアイテム';
+        document.getElementById('result-title').textContent = t;
+      }
+      let DATA = null;
+      let currentQuery = '';
+      let currentCat = 'all';
+      let currentSort = 'relevance';
+      function update(){
+        if(!DATA) return;
+        const filtered = filterItems(DATA, currentQuery, currentCat);
+        const sorted = sortItems(filtered, currentSort);
+        render(sorted, currentQuery);
+      }
+      function doSearch(q){
+        currentQuery = q;
+        setTitle(q);
+        if(DATA){ update(); return; }
+        fetch('data/projects.json')
+          .then(r=>r.json())
+          .then(data=>{ DATA = data; update(); })
+          .catch(()=>{
+            document.getElementById('grid').innerHTML = '<p class="text-sm text-gray-500">結果を読み込めませんでした。</p>';
+          });
+      }
+      // boot
+      const q0 = getQuery();
+      doSearch(q0);
+      // wire search forms
+      function handleSubmitFactory(getInput){
+        return (e)=>{ e.preventDefault(); const v = (getInput()?.value||'').trim(); const url = v? ('?q='+encodeURIComponent(v)) : location.pathname; history.replaceState(null, '', url); doSearch(v); };
+      }
+      const form = document.getElementById('search-form');
+      const input = document.getElementById('search-input');
+      if(form) form.addEventListener('submit', handleSubmitFactory(()=>input));
+      const formm = document.getElementById('search-form-m');
+      const inputm = document.getElementById('search-input-m');
+      if(formm) formm.addEventListener('submit', handleSubmitFactory(()=>inputm));
+
+      // category chips
+      document.querySelectorAll('[data-cat]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          document.querySelectorAll('[data-cat]').forEach(b=>b.classList.remove('chip-active'));
+          btn.classList.add('chip-active');
+          currentCat = btn.getAttribute('data-cat');
+          update();
+        });
+      });
+      // sorting
+      const sortSel = document.getElementById('sort');
+      if(sortSel) sortSel.addEventListener('change', ()=>{ currentSort = sortSel.value; update(); });
+
+      // suggestions
+      function buildSuggest(listEl, getVal, setVal){
+        function fill(pool, q){
+          if(!listEl) return;
+          listEl.innerHTML = '';
+          if(!q){ listEl.classList.add('hidden'); return; }
+          const lc = q.toLowerCase();
+          const matched = (pool||[]).filter(p=> p.title.toLowerCase().includes(lc)).slice(0,6);
+          if(matched.length===0){ listEl.classList.add('hidden'); return; }
+          matched.forEach(p=>{
+            const li = document.createElement('li');
+            li.className = 'px-3 py-2 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer';
+            li.textContent = p.title;
+            li.addEventListener('click', ()=>{ setVal(p.title); listEl.classList.add('hidden'); const f = form || formm; f?.dispatchEvent(new Event('submit',{cancelable:true})); });
+            listEl.appendChild(li);
+          });
+          listEl.classList.remove('hidden');
+        }
+        return { fill };
+      }
+      const sug = buildSuggest(document.getElementById('suggestions'), ()=>input?.value, v=>{ if(input) input.value=v; });
+      const sugm = buildSuggest(document.getElementById('suggestions-m'), ()=>inputm?.value, v=>{ if(inputm) inputm.value=v; });
+      function onInput(el, sugInstance){
+        el.addEventListener('input', ()=>{
+          const v = (el.value||'').trim();
+          if(!DATA){
+            fetch('data/projects.json').then(r=>r.json()).then(d=>{
+              DATA=d;
+              const published=[...(d.apps||[]).filter(p=>p.published===true), ...(d.webs||[]).filter(p=>p.published===true)];
+              sugInstance.fill(published, v);
+            });
+            return;
+          }
+          const published=[...(DATA.apps||[]).filter(p=>p.published===true), ...(DATA.webs||[]).filter(p=>p.published===true)];
+          sugInstance.fill(published, v);
+        });
+      }
+      if(input) onInput(input, sug);
+      if(inputm) onInput(inputm, sugm);
+    </script>
+  </body>
+  </html>
+
+
+

@@ -1,0 +1,19 @@
+{
+  "apps": [
+    { "title": "ナンプレ", "thumb": "images/nanpure.svg", "demo": "https://nampure-app.vercel.app/", "published": true },
+    { "title": "EcoTrack", "thumb": "images/sample-app-1.svg", "demo": "https://example.com/eco", "published": false },
+    { "title": "FitFusion", "thumb": "images/sample-app-2.svg", "demo": "https://example.com/fit", "published": false },
+    { "title": "TravelSnap", "thumb": "images/sample-app-3.svg", "demo": "https://example.com/travel", "published": false },
+    { "title": "MindMate", "thumb": "images/sample-app-4.svg", "demo": "https://example.com/mind", "published": false },
+    { "title": "Budgetly", "thumb": "images/sample-app-5.svg", "demo": "https://example.com/budget", "published": false }
+  ],
+  "webs": [
+    { "title": "Mindful Moments", "thumb": "images/sample-web-1.svg", "demo": "https://example.com/mindful", "published": false },
+    { "title": "RecipeFinder", "thumb": "images/sample-web-2.svg", "demo": "https://example.com/recipe", "published": false },
+    { "title": "Portfolio Grid", "thumb": "images/sample-web-3.svg", "demo": "https://example.com/grid", "published": false },
+    { "title": "ShopLite", "thumb": "images/sample-web-4.svg", "demo": "https://example.com/shop", "published": false },
+    { "title": "Blogify", "thumb": "images/sample-web-5.svg", "demo": "https://example.com/blog", "published": false }
+  ]
+}
+
+
